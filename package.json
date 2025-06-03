@@ -1,6 +1,6 @@
 {
   "name": "use-hotkeys-ts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A typed React hook for handling hotkeys with TypeScript support.",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
