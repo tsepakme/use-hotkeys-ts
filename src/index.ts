@@ -1,1 +1,2 @@
-export * from './useHotkeys';
+export { useHotkeys } from './useHotkeys';
+export type { HotkeyHandler } from './useHotkeys';

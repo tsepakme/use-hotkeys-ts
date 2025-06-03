@@ -9,13 +9,14 @@ export function useHotkeys(keys: string | string[], callback: HotkeyHandler) {
     const handler = (e: KeyboardEvent) => {
       const pressed = `${e.ctrlKey ? "ctrl+" : ""}${
         e.shiftKey ? "shift+" : ""
-      }${e.altKey ? "alt+" : ""}${e.key.toLowerCase()}`;
-      if (keysArray.includes(pressed)) {
+      }${e.altKey ? "alt+" : ""}${e.metaKey ? "meta+" : ""}${e.key.toLowerCase()}`;
+      
+      if (keysArray.some(combo => combo.toLowerCase() === pressed)) {
         callback(e);
       }
     };
 
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
   }, [keys, callback]);
 }
