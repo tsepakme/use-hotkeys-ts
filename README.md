@@ -4,7 +4,8 @@
 ![TypeScript](https://img.shields.io/badge/language-TypeScript-blue)
 [![License](https://img.shields.io/npm/l/use-hotkeys-ts)](./LICENSE)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/use-hotkeys-ts)](https://bundlephobia.com/package/use-hotkeys-ts)
-[![Coverage Status](https://coveralls.io/repos/github/tsepakme/use-hotkeys-ts/badge.svg?branch=master)](https://coveralls.io/github/tsepakme/use-hotkeys-ts?branch=master)
+[![codecov](https://codecov.io/gh/tsepakme/use-hotkeys-ts/branch/main/graph/badge.svg)](https://codecov.io/gh/tsepakme/use-hotkeys-ts)
+
 
 A fully typed React hook for handling keyboard shortcuts and hotkeys with ease.
 
@@ -15,7 +16,7 @@ A fully typed React hook for handling keyboard shortcuts and hotkeys with ease.
 You can now use key sequences - combinations of keys pressed one after another:
 
 ```ts
-// Detecting "g" followed by "i"
+// Detecting "g" followed by "h"
 useHotkeys('g h', () => {
   console.log('Redirecting to home page');
 });
