@@ -1,6 +1,6 @@
 {
   "name": "use-hotkeys-ts",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "A typed React hook for handling hotkeys with TypeScript support.",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -19,7 +19,10 @@
     "build": "tsup src/index.ts --format esm,cjs --dts",
     "test": "vitest",
     "prepublishOnly": "npm run build",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "publish:patch": "npm version patch --no-git-tag-version && git add package.json package-lock.json && git commit -m 'chore: bump patch version' && npm publish && git push && git push --tags",
+    "publish:minor": "npm version minor --no-git-tag-version && git add package.json package-lock.json && git commit -m 'chore: bump minor version' && npm publish && git push && git push --tags",
+    "publish:major": "npm version major --no-git-tag-version && git add package.json package-lock.json && git commit -m 'chore: bump major version' && npm publish && git push && git push --tags"
   },
   "author": "Aiusha Mikhailov",
   "type": "commonjs",
