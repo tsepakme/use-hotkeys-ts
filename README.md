@@ -4,6 +4,7 @@
 ![TypeScript](https://img.shields.io/badge/language-TypeScript-blue)
 [![License](https://img.shields.io/npm/l/use-hotkeys-ts)](./LICENSE)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/use-hotkeys-ts)](https://bundlephobia.com/package/use-hotkeys-ts)
+[![Coverage Status](https://coveralls.io/repos/github/tsepakme/use-hotkeys-ts/badge.svg?branch=master)](https://coveralls.io/github/tsepakme/use-hotkeys-ts?branch=master)
 
 A fully typed React hook for handling keyboard shortcuts and hotkeys with ease.
 
