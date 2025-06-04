@@ -7,6 +7,34 @@
 
 A fully typed React hook for handling keyboard shortcuts and hotkeys with ease.
 
+## New in v1.1.0
+
+### Key Sequences
+
+You can now use key sequences - combinations of keys pressed one after another:
+
+```ts
+// Detecting "g" followed by "i"
+useHotkeys('g h', () => {
+  console.log('Redirecting to home page');
+});
+
+// With custom delay (default is 1000ms)
+useHotkeys('g i t', () => {
+  console.log('Git command');
+}, 2000); // 2 second timeout
+```
+
+### Improved Function Key Support
+
+Function keys are now fully supported with better case handling:
+
+```ts
+useHotkeys('shift+f12', () => {
+  console.log('Open developer tools');
+});
+```
+
 ## Installation
 
 ```bash
