@@ -1,6 +1,14 @@
 import { useEffect, useRef } from "react";
 
-export type HotkeyHandler = (e: KeyboardEvent) => void;
+export type HotkeyHandler = (e: KeyboardEvent) => void | boolean;
+
+/** Normalize key string for comparison: cmd/command → meta (macOS compatibility). */
+function normalizeKey(key: string): string {
+  return key
+    .toLowerCase()
+    .replace(/\bcmd\b/g, "meta")
+    .replace(/\bcommand\b/g, "meta");
+}
 
 export function useHotkeys(
   keys: string | string[],
@@ -12,27 +20,47 @@ export function useHotkeys(
 
   useEffect(() => {
     const keysArray = Array.isArray(keys) ? keys : [keys];
+    if (keysArray.length === 0) return; // Handle empty keys array
 
     const normalizedKeysArray = keysArray.map((k) =>
       k.includes(" ") ? k.split(" ") : [k]
     );
 
     const longestKeyLength = Math.max(
-      ...normalizedKeysArray.map((combo) => combo.length)
+      ...normalizedKeysArray.map((combo) => combo.length),
+      0
     );
 
     const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        ((target.tagName === "INPUT" &&
+          ![
+            "button",
+            "submit",
+            "reset",
+            "checkbox",
+            "radio",
+            "file",
+            "image",
+          ].includes((target as HTMLInputElement).type)) ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.getAttribute("contenteditable") === "true")
+      ) {
+        return;
+      }
+
       const pressed = `${e.ctrlKey ? "ctrl+" : ""}${
         e.shiftKey ? "shift+" : ""
       }${e.altKey ? "alt+" : ""}${
         e.metaKey ? "meta+" : ""
-      }${e.key.toLowerCase()}`;
+      }${e.key === " " ? "space" : e.key.toLowerCase()}`;
 
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-
-      sequenceRef.current = sequenceRef.current || [];
 
       sequenceRef.current.push(pressed);
 
@@ -43,11 +71,17 @@ export function useHotkeys(
       const matched = normalizedKeysArray.some(
         (combo) =>
           combo.length === sequenceRef.current.length &&
-          combo.every((key, i) => key.toLowerCase() === sequenceRef.current[i])
+          combo.every(
+            (key, i) =>
+              normalizeKey(key) === sequenceRef.current[i].toLowerCase()
+          )
       );
 
       if (matched) {
-        callback(e);
+        const result = callback(e);
+        if (result === false) {
+          e.preventDefault();
+        }
         sequenceRef.current = [];
         return;
       }

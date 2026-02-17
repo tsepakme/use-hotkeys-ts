@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.1.4 (2026-02-17)
+
+### Features
+- Added ignoring of hotkeys in form elements (inputs, textareas, select dropdowns)
+- Added support for contenteditable elements detection
+- Improved focus handling for interactive elements
+
+### Tests
+- Added tests verifying that hotkeys don't trigger in form elements
+- Added tests for contenteditable elements
+- Expanded test coverage for keyboard event handling
+
+### Fixes
+- Fixed issue with hotkeys triggering while typing in form inputs
+- Fixed contenteditable detection to prevent hotkey execution in rich text editors
+- Fixed event handling in nested form elements
+
 ## 1.1.0 (2025-06-05)
 
 ### Features
@@ -19,7 +36,7 @@
 - Fixed keyboard event handling
 - Updated tests to work with jsdom
 
-## 1.0.1 (2025-XX-XX)
+## 1.0.1 (2025-06-03)
 
 ### Fixes
 - First public release

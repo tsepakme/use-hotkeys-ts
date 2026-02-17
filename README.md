@@ -9,8 +9,6 @@
 
 A fully typed React hook for handling keyboard shortcuts and hotkeys with ease.
 
-## New in v1.1.0
-
 ### Key Sequences
 
 You can now use key sequences - combinations of keys pressed one after another:
@@ -64,6 +62,8 @@ useHotkeys('ctrl+s', (e) => {
 
 ### Multiple Key Combinations
 
+Use an array to match several shortcuts. On macOS, `cmd` and `meta` are equivalent (e.g. `cmd+s` matches ⌘+S):
+
 ```ts
 useHotkeys(['ctrl+s', 'cmd+s'], (e) => {
   e.preventDefault();
@@ -83,14 +83,6 @@ useHotkeys('/', () => {
 });
 ```
 
-### Handling keydown / keyup events
-
-```ts
-useHotkeys('ctrl+enter', () => {
-  console.log('Form submitted');
-}, { keydown: true, keyup: false });
-```
-
 ### Integration with react-hook-form
 
 ```ts
@@ -101,56 +93,44 @@ useHotkeys('ctrl+enter', () => {
 });
 ```
 
-### Limiting to a DOM element (with ref)
+### Callback return value
+
+Return `false` from the callback to call `event.preventDefault()`:
 
 ```ts
-const ref = useRef(null);
-
-useHotkeys('esc', () => {
-  console.log('Close modal');
-}, {}, [ref]);
-```
-
-### Using `ignoreModifiers`
-
-```ts
-useHotkeys('/', () => {
-  console.log('Focus search');
-}, { ignoreModifiers: true });
-```
-
-### Handling multiple shortcuts with different actions
-
-```ts
-useHotkeys(['ctrl+a', 'ctrl+b'], (e, handler) => {
-  switch (handler.keys.join('+')) {
-    case 'ctrl+a':
-      console.log('Action A');
-      break;
-    case 'ctrl+b':
-      console.log('Action B');
-      break;
-  }
+useHotkeys('ctrl+s', (e) => {
+  console.log('Saving...');
+  return false; // prevents default browser save
 });
 ```
+
+## API
+
+- **`useHotkeys(keys, callback, delay?)`**
+  - `keys`: `string | string[]` — key combo(s), e.g. `'ctrl+s'`, `['ctrl+s', 'cmd+s']`, or a sequence like `'g h'`.
+  - `callback`: `(e: KeyboardEvent) => void | boolean` — called when the shortcut matches. Return `false` to call `e.preventDefault()`.
+  - `delay`: `number` (optional, default `1000`) — timeout in ms for key sequences (e.g. `'g i'`).
+
+Hotkeys are ignored when focus is inside `<input>`, `<textarea>`, `<select>`, or `contenteditable` (except types like button, submit, checkbox, radio).
 
 ## Features
 
 ✅ Multiple key combinations
 
+✅ Key sequences (e.g. `g i` then `t`)
+
 ✅ Full TypeScript support
 
-✅ Scope restriction via ref
+✅ macOS / Windows: `cmd` and `meta` both work
 
-✅ keydown / keyup event options
-
-✅ macOS / Windows key compatibility
+✅ Ignores form elements and contenteditable
 
 ✅ Easy integration with forms and UI frameworks
 
-
 ## Future Plans
 
+- Options: keydown/keyup, ignoreModifiers
+- Scope restriction via ref (limit hotkey to a DOM node)
 - Auto-detection of platform (ctrl vs cmd)
 
 - Global mode for background hotkeys
@@ -161,7 +141,7 @@ useHotkeys(['ctrl+a', 'ctrl+b'], (e, handler) => {
 
 - Storybook demo support
 
-##  Links
+## Links
 
 - [Live Demo on CodeSandbox](https://codesandbox.io/p/sandbox/hgph7p)
 - [npm page](https://www.npmjs.com/package/use-hotkeys-ts)
