@@ -2,12 +2,20 @@ import { useEffect, useRef } from "react";
 
 export type HotkeyHandler = (e: KeyboardEvent) => void | boolean;
 
-/** Normalize key string for comparison: cmd/command → meta (macOS compatibility). */
+const MODIFIER_ORDER = ["ctrl", "shift", "alt", "meta"];
+
+/** Normalize aliases and modifier order so equivalent shortcuts compare equally. */
 function normalizeKey(key: string): string {
-  return key
-    .toLowerCase()
-    .replace(/\bcmd\b/g, "meta")
-    .replace(/\bcommand\b/g, "meta");
+  const parts = key.toLowerCase().split("+").filter(Boolean).map((part) => {
+    if (part === "cmd" || part === "command") return "meta";
+    if (part === "control") return "ctrl";
+    return part;
+  });
+  const keyName = parts.pop() ?? "";
+  const modifiers = [...new Set(parts)].sort(
+    (a, b) => MODIFIER_ORDER.indexOf(a) - MODIFIER_ORDER.indexOf(b)
+  );
+  return [...modifiers, keyName === " " ? "space" : keyName].join("+");
 }
 
 export function useHotkeys(
@@ -23,7 +31,7 @@ export function useHotkeys(
     if (keysArray.length === 0) return; // Handle empty keys array
 
     const normalizedKeysArray = keysArray.map((k) =>
-      k.includes(" ") ? k.split(" ") : [k]
+      k.trim().split(/\s+/).filter(Boolean).map(normalizeKey)
     );
 
     const longestKeyLength = Math.max(
@@ -33,6 +41,13 @@ export function useHotkeys(
 
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
+      const contentEditableRoot = target?.closest?.("[contenteditable]");
+      const isEditable = Boolean(
+        target?.isContentEditable ||
+          (contentEditableRoot?.getAttribute("contenteditable")?.toLowerCase() !==
+            "false" &&
+            contentEditableRoot)
+      );
       if (
         target &&
         ((target.tagName === "INPUT" &&
@@ -47,16 +62,26 @@ export function useHotkeys(
           ].includes((target as HTMLInputElement).type)) ||
           target.tagName === "TEXTAREA" ||
           target.tagName === "SELECT" ||
-          target.getAttribute("contenteditable") === "true")
+          isEditable)
       ) {
+        sequenceRef.current = [];
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
         return;
       }
 
-      const pressed = `${e.ctrlKey ? "ctrl+" : ""}${
-        e.shiftKey ? "shift+" : ""
-      }${e.altKey ? "alt+" : ""}${
-        e.metaKey ? "meta+" : ""
-      }${e.key === " " ? "space" : e.key.toLowerCase()}`;
+      const modifiers = [
+        e.ctrlKey && "ctrl",
+        e.shiftKey && "shift",
+        e.altKey && "alt",
+        e.metaKey && "meta",
+      ].filter((modifier): modifier is string => Boolean(modifier));
+      const pressed = [
+        ...modifiers,
+        e.key === " " ? "space" : e.key.toLowerCase(),
+      ].join("+");
 
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);

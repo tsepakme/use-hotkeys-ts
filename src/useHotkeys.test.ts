@@ -86,6 +86,13 @@ describe('useHotkeys', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
+  it('matches modifier combinations regardless of their written order', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('shift+ctrl+s', callback));
+    simulateKeyPress('s', { ctrlKey: true, shiftKey: true });
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
   it('calls the callback when metaKey combination pressed', () => {
     const callback = vi.fn();
     renderHook(() => useHotkeys('meta+space', callback));
@@ -124,6 +131,14 @@ describe('useHotkeys', () => {
     renderHook(() => useHotkeys('g i', callback));
     simulateKeyPress('g');
     simulateKeyPress('i');
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('recognizes a real space key event in a sequence', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('g space', callback));
+    simulateKeyPress('g');
+    simulateKeyPress(' ');
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
@@ -197,6 +212,30 @@ describe('useHotkeys', () => {
       expect(callback).not.toHaveBeenCalled();
       callback.mockClear();
     }
+  });
+
+  it('resets a partial sequence when a key is pressed in an editable element', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('g i', callback));
+
+    simulateKeyPress('g');
+    simulateKeyPress('i', { target: document.createElement('input') });
+    simulateKeyPress('i');
+
+    expect(callback).not.toHaveBeenCalled();
+  });
+
+  it('ignores descendants of contenteditable elements', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('a', callback));
+    const editor = document.createElement('div');
+    editor.setAttribute('contenteditable', 'true');
+    const child = document.createElement('span');
+    editor.appendChild(child);
+
+    simulateKeyPress('a', { target: child });
+
+    expect(callback).not.toHaveBeenCalled();
   });
 
   it("handles empty keys array", () => {

@@ -20,9 +20,9 @@
     "test": "vitest",
     "prepublishOnly": "npm run build",
     "test:coverage": "vitest run --coverage",
-    "publish:patch": "npm version patch --no-git-tag-version && git add package.json package-lock.json && git commit -m 'chore: bump patch version' && npm publish && git push && git push --tags",
-    "publish:minor": "npm version minor --no-git-tag-version && git add package.json package-lock.json && git commit -m 'chore: bump minor version' && npm publish && git push && git push --tags",
-    "publish:major": "npm version major --no-git-tag-version && git add package.json package-lock.json && git commit -m 'chore: bump major version' && npm publish && git push && git push --tags"
+    "publish:patch": "npm version patch --no-git-tag-version && git add package.json package-lock.json && git commit -m 'chore: bump patch version' && git tag v$(node -p \"require('./package.json').version\") && npm publish && git push && git push --tags",
+    "publish:minor": "npm version minor --no-git-tag-version && git add package.json package-lock.json && git commit -m 'chore: bump minor version' && git tag v$(node -p \"require('./package.json').version\") && npm publish && git push && git push --tags",
+    "publish:major": "npm version major --no-git-tag-version && git add package.json package-lock.json && git commit -m 'chore: bump major version' && git tag v$(node -p \"require('./package.json').version\") && npm publish && git push && git push --tags"
   },
   "author": "Aiusha Mikhailov",
   "type": "commonjs",
