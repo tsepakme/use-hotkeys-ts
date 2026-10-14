@@ -25,6 +25,8 @@ export function useHotkeys(
 ) {
   const sequenceRef = useRef<string[]>([]);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callbackRef = useRef(callback);
+  callbackRef.current = callback;
 
   useEffect(() => {
     const keysArray = Array.isArray(keys) ? keys : [keys];
@@ -103,7 +105,7 @@ export function useHotkeys(
       );
 
       if (matched) {
-        const result = callback(e);
+        const result = callbackRef.current(e);
         if (result === false) {
           e.preventDefault();
         }
@@ -121,7 +123,9 @@ export function useHotkeys(
       document.removeEventListener("keydown", handler);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
+      sequenceRef.current = [];
     };
-  }, [keys, callback, delay]);
+  }, [keys, delay]);
 }

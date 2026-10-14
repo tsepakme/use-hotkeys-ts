@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
     "prepublishOnly": "npm run build",
     "test:coverage": "vitest run --coverage",
