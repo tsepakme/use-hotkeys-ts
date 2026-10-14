@@ -119,6 +119,17 @@ describe('useHotkeys', () => {
     expect(callback12).toHaveBeenCalledTimes(1);
   });
 
+  it('calls the callback for any key when using the wildcard', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('*', callback));
+
+    simulateKeyPress('a');
+    simulateKeyPress('Enter');
+    simulateKeyPress('ArrowLeft', { ctrlKey: true });
+
+    expect(callback).toHaveBeenCalledTimes(3);
+  });
+
   it('does not call the callback for unmatched keys', () => {
     const callback = vi.fn();
     renderHook(() => useHotkeys('a', callback));

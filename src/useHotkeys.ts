@@ -98,10 +98,10 @@ export function useHotkeys(
       const matched = normalizedKeysArray.some(
         (combo) =>
           combo.length === sequenceRef.current.length &&
-          combo.every(
-            (key, i) =>
-              normalizeKey(key) === sequenceRef.current[i].toLowerCase()
-          )
+          combo.every((key, i) => {
+            if (key === "*") return true;
+            return normalizeKey(key) === sequenceRef.current[i].toLowerCase();
+          })
       );
 
       if (matched) {
