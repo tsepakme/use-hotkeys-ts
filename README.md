@@ -3,37 +3,10 @@
 [![npm version](https://img.shields.io/npm/v/use-hotkeys-ts)](https://www.npmjs.com/package/use-hotkeys-ts)
 ![TypeScript](https://img.shields.io/badge/language-TypeScript-blue)
 [![License](https://img.shields.io/npm/l/use-hotkeys-ts)](./LICENSE)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/use-hotkeys-ts)](https://bundlephobia.com/package/use-hotkeys-ts)
+[![Bundle size](https://img.shields.io/bundlejs/size/use-hotkeys-ts?externals=react&label=bundle%20size)](https://bundlejs.com/?q=use-hotkeys-ts)
 [![codecov](https://codecov.io/gh/tsepakme/use-hotkeys-ts/branch/main/graph/badge.svg)](https://codecov.io/gh/tsepakme/use-hotkeys-ts)
 
-
-A fully typed React hook for handling keyboard shortcuts and hotkeys with ease.
-
-### Key Sequences
-
-You can now use key sequences - combinations of keys pressed one after another:
-
-```ts
-// Detecting "g" followed by "h"
-useHotkeys('g h', () => {
-  console.log('Redirecting to home page');
-});
-
-// With custom delay (default is 1000ms)
-useHotkeys('g i t', () => {
-  console.log('Git command');
-}, 2000); // 2 second timeout
-```
-
-### Improved Function Key Support
-
-Function keys are now fully supported with better case handling:
-
-```ts
-useHotkeys('shift+f12', () => {
-  console.log('Open developer tools');
-});
-```
+A typed React hook for handling keyboard shortcuts and key sequences.
 
 ## Installation
 
@@ -41,108 +14,120 @@ useHotkeys('shift+f12', () => {
 npm install use-hotkeys-ts
 ```
 
-or 
+or
 
 ```bash
 yarn add use-hotkeys-ts
 ```
 
-## Quick Start
+## Quick start
 
-```ts
+```tsx
 import { useHotkeys } from 'use-hotkeys-ts';
 
-useHotkeys('ctrl+s', (e) => {
-  e.preventDefault();
-  console.log('Saving...');
+function SaveButton() {
+  useHotkeys('ctrl+s', (event) => {
+    event.preventDefault();
+    console.log('Saving...');
+  });
+
+  return <button>Save</button>;
+}
+```
+
+## Usage
+
+### Key combinations
+
+Join modifier names and a key with `+`. Modifier order does not matter. The
+supported modifier names are `ctrl`/`control`, `shift`, `alt`, and
+`meta`/`cmd`/`command`.
+
+```tsx
+useHotkeys('ctrl+shift+s', save);
+useHotkeys('shift+ctrl+s', save); // equivalent
+useHotkeys('cmd+s', save); // cmd is an alias for meta
+```
+
+Pass an array to use more than one shortcut for the same callback:
+
+```tsx
+useHotkeys(['ctrl+s', 'cmd+s'], (event) => {
+  event.preventDefault();
+  save();
 });
 ```
 
-## Usage Examples
+### Key sequences
 
-### Multiple Key Combinations
+Separate keys with spaces to match them in order. The optional `delay` is the
+maximum time in milliseconds between sequence keys; it defaults to `1000`.
 
-Use an array to match several shortcuts. On macOS, `cmd` and `meta` are equivalent (e.g. `cmd+s` matches ⌘+S):
+```tsx
+useHotkeys('g h', goHome);
+useHotkeys('g i t', openGit, 2000);
+```
 
-```ts
-useHotkeys(['ctrl+s', 'cmd+s'], (e) => {
-  e.preventDefault();
-  console.log('Save triggered');
+### Wildcard
+
+Use `'*'` to call a handler for any single keydown event:
+
+```tsx
+useHotkeys('*', (event) => {
+  console.log('Pressed:', event.key);
 });
 ```
 
-### Special and Function Keys
+### Special keys
 
-```ts
-useHotkeys('f5', () => {
-  console.log('Page refresh');
-});
+The final part of a shortcut is compared to the browser's `KeyboardEvent.key`
+value, case-insensitively. For example:
 
-useHotkeys('/', () => {
-  console.log('Focus search');
-});
+```tsx
+useHotkeys('f5', refresh);
+useHotkeys('shift+f12', openTools);
+useHotkeys('space', togglePlayback); // also matches an actual space key event
+useHotkeys('enter', submit);
 ```
 
-### Integration with react-hook-form
+### Preventing the browser default
 
-```ts
-const { handleSubmit } = useForm();
+Call `event.preventDefault()` in the callback, or return `false`:
 
-useHotkeys('ctrl+enter', () => {
-  handleSubmit(onSubmit)();
-});
-```
-
-### Callback return value
-
-Return `false` from the callback to call `event.preventDefault()`:
-
-```ts
-useHotkeys('ctrl+s', (e) => {
-  console.log('Saving...');
-  return false; // prevents default browser save
+```tsx
+useHotkeys('ctrl+s', () => {
+  save();
+  return false;
 });
 ```
 
 ## API
 
-- **`useHotkeys(keys, callback, delay?)`**
-  - `keys`: `string | string[]` — key combo(s), e.g. `'ctrl+s'`, `['ctrl+s', 'cmd+s']`, or a sequence like `'g h'`.
-  - `callback`: `(e: KeyboardEvent) => void | boolean` — called when the shortcut matches. Return `false` to call `e.preventDefault()`.
-  - `delay`: `number` (optional, default `1000`) — timeout in ms for key sequences (e.g. `'g i'`).
+```ts
+useHotkeys(keys, callback, delay?)
+```
 
-Hotkeys are ignored when focus is inside `<input>`, `<textarea>`, `<select>`, or `contenteditable` (except types like button, submit, checkbox, radio).
+- `keys: string | string[]` — a shortcut, a sequence, a wildcard, or an array
+  of shortcuts. Use `+` between modifiers and the key, and spaces between
+  sequential keys.
+- `callback: (event: KeyboardEvent) => void | boolean` — called when a shortcut
+  matches. Returning `false` calls `event.preventDefault()`.
+- `delay?: number` — timeout between keys in a sequence, in milliseconds;
+  defaults to `1000`.
 
-## Features
+## Behavior and limitations
 
-✅ Multiple key combinations
-
-✅ Key sequences (e.g. `g i` then `t`)
-
-✅ Full TypeScript support
-
-✅ macOS / Windows: `cmd` and `meta` both work
-
-✅ Ignores form elements and contenteditable
-
-✅ Easy integration with forms and UI frameworks
-
-## Future Plans
-
-- Options: keydown/keyup, ignoreModifiers
-- Scope restriction via ref (limit hotkey to a DOM node)
-- Auto-detection of platform (ctrl vs cmd)
-
-- Global mode for background hotkeys
-
-- Dev/debug mode
-
-- Logging and telemetry support
-
-- Storybook demo support
+- The hook listens for `keydown` events on `document`.
+- Shortcuts are ignored when the event target is an `<input>`, except when its
+  type is `button`, `submit`, `reset`, `checkbox`, `radio`, `file`, or `image`.
+  They are also ignored in `<textarea>`, `<select>`, and `contenteditable` areas.
+- There is no options object, `keyup` listener, DOM scope, or platform-specific
+  `mod` alias yet.
+- Pass non-empty shortcut strings. Empty shortcut strings are not a supported
+  input; validation for malformed or empty strings is not implemented yet.
 
 ## Links
 
-- [Live Demo on CodeSandbox](https://codesandbox.io/p/sandbox/hgph7p)
-- [npm page](https://www.npmjs.com/package/use-hotkeys-ts)
+- [Live demo on CodeSandbox](https://codesandbox.io/p/sandbox/hgph7p)
+- [npm package](https://www.npmjs.com/package/use-hotkeys-ts)
 - [GitHub repository](https://github.com/tsepakme/use-hotkeys-ts)
