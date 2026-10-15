@@ -30,14 +30,16 @@ export function useHotkeys(
 
   useEffect(() => {
     const keysArray = Array.isArray(keys) ? keys : [keys];
-    if (keysArray.length === 0) return; // Handle empty keys array
-
     const normalizedKeysArray = keysArray.map((k) =>
       k.trim().split(/\s+/).filter(Boolean).map(normalizeKey)
     );
+    const validKeysArray = normalizedKeysArray.filter(
+      (combo) => combo.length > 0
+    );
+    if (validKeysArray.length === 0) return;
 
     const longestKeyLength = Math.max(
-      ...normalizedKeysArray.map((combo) => combo.length),
+      ...validKeysArray.map((combo) => combo.length),
       0
     );
 
@@ -95,7 +97,7 @@ export function useHotkeys(
         sequenceRef.current.shift();
       }
 
-      const matched = normalizedKeysArray.some(
+      const matched = validKeysArray.some(
         (combo) =>
           combo.length === sequenceRef.current.length &&
           combo.every((key, i) => {

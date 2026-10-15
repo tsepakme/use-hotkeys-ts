@@ -256,6 +256,24 @@ describe('useHotkeys', () => {
     expect(callback).not.toHaveBeenCalled();
   });
 
+  it('does not register a listener for an empty shortcut', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('', callback));
+
+    expect(document.addEventListener).not.toHaveBeenCalled();
+  });
+
+  it('ignores empty shortcuts in a shortcut array', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys(['a', ''], callback));
+
+    simulateKeyPress('b');
+    expect(callback).not.toHaveBeenCalled();
+
+    simulateKeyPress('a');
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
   it("handles undefined target", () => {
     const callback = vi.fn();
     renderHook(() => useHotkeys("a", callback));

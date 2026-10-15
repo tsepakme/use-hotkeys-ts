@@ -123,8 +123,9 @@ useHotkeys(keys, callback, delay?)
   They are also ignored in `<textarea>`, `<select>`, and `contenteditable` areas.
 - There is no options object, `keyup` listener, DOM scope, or platform-specific
   `mod` alias yet.
-- Pass non-empty shortcut strings. Empty shortcut strings are not a supported
-  input; validation for malformed or empty strings is not implemented yet.
+- Empty or whitespace-only shortcut strings are ignored. If a shortcut array
+  contains empty entries, those entries are ignored; non-empty shortcuts in the
+  same array still work.
 
 ## Links
 
