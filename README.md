@@ -120,7 +120,9 @@ useHotkeys(keys, callback, delay?)
 - The hook listens for `keydown` events on `document`.
 - Shortcuts are ignored when the event target is an `<input>`, except when its
   type is `button`, `submit`, `reset`, `checkbox`, `radio`, `file`, or `image`.
-  They are also ignored in `<textarea>`, `<select>`, and `contenteditable` areas.
+  They are also ignored in `<textarea>`, `<select>`, and editable
+  `contenteditable` areas. A nested element with `contenteditable="false"` is
+  treated as non-editable, so shortcuts work there.
 - There is no options object, `keyup` listener, DOM scope, or platform-specific
   `mod` alias yet.
 - Empty or whitespace-only shortcut strings are ignored. If a shortcut array
