@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2.1
+
+### Fixes
+- Ignore empty and whitespace-only shortcuts instead of matching every key.
+- Ignore empty entries in arrays while preserving the other shortcuts.
+
+### Tests
+- Cover empty shortcut strings and empty entries in shortcut arrays.
+
+## 1.2.0
+
+### Features
+- Add `'*'` as a wildcard shortcut that matches any single keydown event.
+
 ## 1.1.4 (2026-02-17)
 
 ### Features
