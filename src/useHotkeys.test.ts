@@ -107,6 +107,15 @@ describe('useHotkeys', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
+  it('matches control as ctrl', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('control+s', callback));
+
+    simulateKeyPress('s', { ctrlKey: true });
+
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
   it('calls the callback when key combination with function keys is pressed', () => {
     const callback5 = vi.fn();
     renderHook(() => useHotkeys('ctrl+f5', callback5));
@@ -142,6 +151,16 @@ describe('useHotkeys', () => {
     renderHook(() => useHotkeys('g i', callback));
     simulateKeyPress('g');
     simulateKeyPress('i');
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows repeated whitespace between sequence keys', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('g   i', callback));
+
+    simulateKeyPress('g');
+    simulateKeyPress('i');
+
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
@@ -247,6 +266,23 @@ describe('useHotkeys', () => {
     simulateKeyPress('a', { target: child });
 
     expect(callback).not.toHaveBeenCalled();
+  });
+
+  it('allows hotkeys inside a contenteditable=false child', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('a', callback));
+
+    const editor = document.createElement('div');
+    editor.setAttribute('contenteditable', 'true');
+    const readOnlyChild = document.createElement('div');
+    readOnlyChild.setAttribute('contenteditable', 'false');
+    const child = document.createElement('span');
+    readOnlyChild.appendChild(child);
+    editor.appendChild(readOnlyChild);
+
+    simulateKeyPress('a', { target: child });
+
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 
   it("handles empty keys array", () => {
@@ -424,6 +460,56 @@ describe('useHotkeys', () => {
     window.setTimeout = origSetTimeout;
     window.clearTimeout = origClearTimeout;
 
+    vi.useRealTimers();
+  });
+
+  it('restarts the sequence timeout after each key', () => {
+    vi.useFakeTimers();
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('g i t', callback, 1000));
+
+    simulateKeyPress('g');
+    vi.advanceTimersByTime(700);
+    simulateKeyPress('i');
+    vi.advanceTimersByTime(400);
+    simulateKeyPress('t');
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it('clears the sequence and timer when shortcut parameters change', () => {
+    vi.useFakeTimers();
+    const callback = vi.fn();
+    const { rerender } = renderHook(
+      ({ shortcut, delay }: { shortcut: string; delay: number }) =>
+        useHotkeys(shortcut, callback, delay),
+      { initialProps: { shortcut: 'g i', delay: 1000 } }
+    );
+
+    simulateKeyPress('g');
+    expect(vi.getTimerCount()).toBe(1);
+
+    rerender({ shortcut: 'h i', delay: 500 });
+    expect(vi.getTimerCount()).toBe(0);
+
+    simulateKeyPress('i');
+    expect(callback).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('clears the pending timeout when a sequence matches', () => {
+    vi.useFakeTimers();
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('g i', callback));
+
+    simulateKeyPress('g');
+    expect(vi.getTimerCount()).toBe(1);
+
+    simulateKeyPress('i');
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
     vi.useRealTimers();
   });
 
