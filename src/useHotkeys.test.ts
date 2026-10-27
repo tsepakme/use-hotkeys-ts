@@ -31,6 +31,7 @@ describe('useHotkeys', () => {
   
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
   
   const simulateKeyPress = (key: string, options: Partial<MockKeyboardEvent> = {}): MockKeyboardEvent => {
@@ -296,6 +297,42 @@ describe('useHotkeys', () => {
     const callback = vi.fn();
     renderHook(() => useHotkeys('', callback));
 
+    expect(document.addEventListener).not.toHaveBeenCalled();
+  });
+
+  it.each(['ctrl+', '+a', 'ctrl++a', 'a+b', 'ctrl', 'g ctrl+'])(
+    'ignores invalid shortcut syntax: %s',
+    (shortcut) => {
+      const callback = vi.fn();
+      const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      renderHook(() => useHotkeys(shortcut, callback));
+
+      expect(document.addEventListener).not.toHaveBeenCalled();
+      expect(warning).toHaveBeenCalledWith(
+        `useHotkeys: Ignoring invalid shortcut "${shortcut}".`
+      );
+    }
+  );
+
+  it('keeps valid shortcuts when an array also contains an invalid shortcut', () => {
+    const callback = vi.fn();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    renderHook(() => useHotkeys(['ctrl+', 'a'], callback));
+    simulateKeyPress('a');
+
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not warn about invalid shortcuts in production', () => {
+    const callback = vi.fn();
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.stubEnv('NODE_ENV', 'production');
+
+    renderHook(() => useHotkeys('ctrl+', callback));
+
+    expect(warning).not.toHaveBeenCalled();
     expect(document.addEventListener).not.toHaveBeenCalled();
   });
 
