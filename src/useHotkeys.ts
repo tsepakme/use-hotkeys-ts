@@ -1,17 +1,36 @@
 import { useEffect, useRef } from "react";
 
+declare const process: { env: { NODE_ENV?: string } };
+
 export type HotkeyHandler = (e: KeyboardEvent) => void | boolean;
 
 const MODIFIER_ORDER = ["ctrl", "shift", "alt", "meta"];
+const MODIFIERS = new Set([
+  "ctrl",
+  "control",
+  "shift",
+  "alt",
+  "meta",
+  "cmd",
+  "command",
+]);
 
-/** Normalize aliases and modifier order so equivalent shortcuts compare equally. */
-function normalizeKey(key: string): string {
-  const parts = key.toLowerCase().split("+").filter(Boolean).map((part) => {
+/** Normalize a chord, returning null when its syntax is invalid. */
+function normalizeKey(key: string): string | null {
+  const rawParts = key.toLowerCase().split("+");
+  if (rawParts.some((part) => part.trim() === "")) return null;
+
+  const parts = rawParts.map((part) => {
+    part = part.trim();
     if (part === "cmd" || part === "command") return "meta";
     if (part === "control") return "ctrl";
     return part;
   });
   const keyName = parts.pop() ?? "";
+  if (!keyName || MODIFIERS.has(keyName)) return null;
+  if (keyName === "*" && parts.length > 0) return null;
+  if (parts.some((part) => !MODIFIERS.has(part))) return null;
+
   const modifiers = [...new Set(parts)].sort(
     (a, b) => MODIFIER_ORDER.indexOf(a) - MODIFIER_ORDER.indexOf(b)
   );
@@ -30,12 +49,23 @@ export function useHotkeys(
 
   useEffect(() => {
     const keysArray = Array.isArray(keys) ? keys : [keys];
-    const normalizedKeysArray = keysArray.map((k) =>
-      k.trim().split(/\s+/).filter(Boolean).map(normalizeKey)
-    );
-    const validKeysArray = normalizedKeysArray.filter(
-      (combo) => combo.length > 0
-    );
+    const validKeysArray: string[][] = [];
+    for (const shortcut of keysArray) {
+      const trimmedShortcut = shortcut.trim();
+      if (!trimmedShortcut) continue;
+
+      const combo = trimmedShortcut.split(/\s+/).map(normalizeKey);
+      if (combo.some((key) => key === null)) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(
+            `useHotkeys: Ignoring invalid shortcut "${shortcut}".`
+          );
+        }
+        continue;
+      }
+
+      validKeysArray.push(combo as string[]);
+    }
     if (validKeysArray.length === 0) return;
 
     const longestKeyLength = Math.max(
@@ -102,7 +132,7 @@ export function useHotkeys(
           combo.length === sequenceRef.current.length &&
           combo.every((key, i) => {
             if (key === "*") return true;
-            return normalizeKey(key) === sequenceRef.current[i].toLowerCase();
+            return key === sequenceRef.current[i].toLowerCase();
           })
       );
 
