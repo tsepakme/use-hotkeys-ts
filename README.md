@@ -128,6 +128,12 @@ useHotkeys(keys, callback, delay?)
 - Empty or whitespace-only shortcut strings are ignored. If a shortcut array
   contains empty entries, those entries are ignored; non-empty shortcuts in the
   same array still work.
+- A combination must end with a key, and every part before it must be a
+  supported modifier. Invalid combinations such as `ctrl+`, `+a`, or `a+b` are
+  ignored; development builds log a warning. Invalid entries do not disable
+  other valid shortcuts in the same array.
+- Shortcut strings are validated at runtime. TypeScript does not currently
+  reject invalid string literals at compile time.
 
 ## Links
 

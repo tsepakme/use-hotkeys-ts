@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.2.3
+
+### Fixes
+- Ignore malformed shortcut combinations instead of interpreting them as a
+  different shortcut; warn about them in development.
+
+## 1.2.2
+
+### Tests
+- Cover the `control` modifier alias, repeated whitespace in sequences,
+  `contenteditable="false"`, and sequence timer cleanup.
+
+### Maintenance
+- Verify that the release tag matches the package version.
+- Build through `prepublishOnly` to avoid building twice in the publish workflow.
+- Clarify shortcut and release documentation.
+
 ## 1.2.1
 
 ### Fixes
