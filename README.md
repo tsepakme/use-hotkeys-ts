@@ -39,9 +39,9 @@ function SaveButton() {
 
 ### Key combinations
 
-Join modifier names and a key with `+`. Modifier order does not matter. The
-supported modifier names are `ctrl`/`control`, `shift`, `alt`, and
-`meta`/`cmd`/`command`.
+Join modifier names and a key with `+`. Modifier order does not matter, and
+pressed modifiers must match the shortcut exactly. The supported modifier names
+are `ctrl`/`control`, `shift`, `alt`, and `meta`/`cmd`/`command`.
 
 ```tsx
 useHotkeys('ctrl+shift+s', save);
@@ -62,10 +62,19 @@ useHotkeys(['ctrl+s', 'cmd+s'], (event) => {
 
 Separate keys with spaces to match them in order. The optional `delay` is the
 maximum time in milliseconds between sequence keys; it defaults to `1000`.
+If a key interrupts a partial sequence, it can start a new attempt when it
+matches the first step.
+
+When a completed shortcut is also the prefix of a longer registered sequence,
+its callback waits for the longer sequence or the timeout. If the longer
+sequence completes, only its callback runs. If the user pauses or presses a key
+that cannot continue it, the shorter callback runs. This also works when the
+sequences are registered by different hook instances.
 
 ```tsx
 useHotkeys('g h', goHome);
 useHotkeys('g i t', openGit, 2000);
+useHotkeys(['g h', 'g h i'], navigate); // navigate runs after h and again after i
 ```
 
 ### Wildcard
@@ -105,6 +114,8 @@ useHotkeys('ctrl+s', () => {
 
 ```ts
 useHotkeys(keys, callback, delay?)
+useHotkeys(keys, callback, options?)
+useHotkeys(keys, callback, delay, options?)
 ```
 
 - `keys: string | string[]` — a shortcut, a sequence, a wildcard, or an array
@@ -112,8 +123,24 @@ useHotkeys(keys, callback, delay?)
   sequential keys.
 - `callback: (event: KeyboardEvent) => void | boolean` — called when a shortcut
   matches. Returning `false` calls `event.preventDefault()`.
-- `delay?: number` — timeout between keys in a sequence, in milliseconds;
-  defaults to `1000`.
+- `delay?: number` — maximum time between keys in a sequence and the wait for
+  an ambiguous shortcut, in milliseconds; defaults to `1000`.
+- `preventDefaultOnAmbiguous?: boolean` — synchronously prevents the browser
+  default when this shortcut's callback is deferred. Set it on the registration
+  for the shorter shortcut; it defaults to `false`. Since the callback runs
+  later, its `event.preventDefault()` call or `return false` cannot cancel the
+  browser action. When enabled, the key event is prevented even if a longer
+  sequence eventually wins.
+
+Pass the full options object as the third argument, or keep the numeric
+`delay` argument and pass `preventDefaultOnAmbiguous` fourth:
+
+```tsx
+useHotkeys(['g h', 'g h i'], navigate, {
+  delay: 800,
+  preventDefaultOnAmbiguous: true,
+});
+```
 
 ## Behavior and limitations
 
@@ -123,8 +150,9 @@ useHotkeys(keys, callback, delay?)
   They are also ignored in `<textarea>`, `<select>`, and editable
   `contenteditable` areas. A nested element with `contenteditable="false"` is
   treated as non-editable, so shortcuts work there.
-- There is no options object, `keyup` listener, DOM scope, or platform-specific
-  `mod` alias yet.
+- The options object currently supports `delay` and
+  `preventDefaultOnAmbiguous`. There is no `keyup` listener, DOM scope, or
+  platform-specific `mod` alias yet.
 - Empty or whitespace-only shortcut strings are ignored. If a shortcut array
   contains empty entries, those entries are ignored; non-empty shortcuts in the
   same array still work.

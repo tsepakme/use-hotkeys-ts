@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.4
+
+### Fixes
+- Match sequences with shared prefixes independently and restart a sequence
+  when a key begins a new matching attempt.
+
 ## 1.2.3
 
 ### Fixes
