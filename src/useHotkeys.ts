@@ -37,6 +37,35 @@ function normalizeKey(key: string): string | null {
   return [...modifiers, keyName === " " ? "space" : keyName].join("+");
 }
 
+function matchesChord(shortcutChord: string, pressedChord: string): boolean {
+  return shortcutChord === "*" || shortcutChord === pressedChord;
+}
+
+function getLongestPrefixSuffixLength(
+  history: string[],
+  shortcuts: string[][]
+): number {
+  let longestMatch = 0;
+
+  for (const shortcut of shortcuts) {
+    const maxLength = Math.min(history.length, shortcut.length - 1);
+    for (let length = maxLength; length > longestMatch; length--) {
+      const matchesPrefix = shortcut
+        .slice(0, length)
+        .every((chord, index) =>
+          matchesChord(chord, history[history.length - length + index])
+        );
+
+      if (matchesPrefix) {
+        longestMatch = length;
+        break;
+      }
+    }
+  }
+
+  return longestMatch;
+}
+
 export function useHotkeys(
   keys: string | string[],
   callback: HotkeyHandler,
@@ -67,11 +96,6 @@ export function useHotkeys(
       validKeysArray.push(combo as string[]);
     }
     if (validKeysArray.length === 0) return;
-
-    const longestKeyLength = Math.max(
-      ...validKeysArray.map((combo) => combo.length),
-      0
-    );
 
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -121,33 +145,35 @@ export function useHotkeys(
         clearTimeout(timeoutRef.current);
       }
 
-      sequenceRef.current.push(pressed);
-
-      if (sequenceRef.current.length > longestKeyLength) {
-        sequenceRef.current.shift();
-      }
-
+      const history = [...sequenceRef.current, pressed];
       const matched = validKeysArray.some(
         (combo) =>
-          combo.length === sequenceRef.current.length &&
-          combo.every((key, i) => {
-            if (key === "*") return true;
-            return key === sequenceRef.current[i].toLowerCase();
-          })
+          combo.length <= history.length &&
+          combo.every((key, index) =>
+            matchesChord(key, history[history.length - combo.length + index])
+          )
       );
+      const prefixLength = getLongestPrefixSuffixLength(
+        history,
+        validKeysArray
+      );
+      sequenceRef.current = prefixLength
+        ? history.slice(-prefixLength)
+        : [];
 
       if (matched) {
         const result = callbackRef.current(e);
         if (result === false) {
           e.preventDefault();
         }
-        sequenceRef.current = [];
-        return;
       }
 
-      timeoutRef.current = setTimeout(() => {
-        sequenceRef.current = [];
-      }, delay);
+      if (sequenceRef.current.length > 0) {
+        timeoutRef.current = setTimeout(() => {
+          sequenceRef.current = [];
+          timeoutRef.current = null;
+        }, delay);
+      }
     };
 
     document.addEventListener("keydown", handler);

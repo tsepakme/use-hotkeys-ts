@@ -87,6 +87,25 @@ describe('useHotkeys', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
+  it('requires modifiers to match exactly', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('a', callback));
+
+    simulateKeyPress('a', { ctrlKey: true });
+    simulateKeyPress('a', { shiftKey: true });
+
+    expect(callback).not.toHaveBeenCalled();
+  });
+
+  it('does not match a chord when an additional modifier is pressed', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('ctrl+a', callback));
+
+    simulateKeyPress('a', { ctrlKey: true, shiftKey: true });
+
+    expect(callback).not.toHaveBeenCalled();
+  });
+
   it('matches modifier combinations regardless of their written order', () => {
     const callback = vi.fn();
     renderHook(() => useHotkeys('shift+ctrl+s', callback));
@@ -153,6 +172,45 @@ describe('useHotkeys', () => {
     simulateKeyPress('g');
     simulateKeyPress('i');
     expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('restarts a sequence when a mismatched key begins a new attempt', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys('g h', callback));
+
+    simulateKeyPress('g');
+    simulateKeyPress('x');
+    simulateKeyPress('g');
+    simulateKeyPress('h');
+
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('tracks overlapping sequence prefixes registered by one hook', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys(['g h', 'g h i'], callback));
+
+    simulateKeyPress('g');
+    simulateKeyPress('h');
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    simulateKeyPress('i');
+    expect(callback).toHaveBeenCalledTimes(2);
+  });
+
+  it('tracks a shared sequence prefix independently across hooks', () => {
+    const shortCallback = vi.fn();
+    const longCallback = vi.fn();
+    renderHook(() => useHotkeys('g h', shortCallback));
+    renderHook(() => useHotkeys('g h i', longCallback));
+
+    simulateKeyPress('g');
+    simulateKeyPress('h');
+    expect(shortCallback).toHaveBeenCalledTimes(1);
+    expect(longCallback).not.toHaveBeenCalled();
+
+    simulateKeyPress('i');
+    expect(longCallback).toHaveBeenCalledTimes(1);
   });
 
   it('allows repeated whitespace between sequence keys', () => {
