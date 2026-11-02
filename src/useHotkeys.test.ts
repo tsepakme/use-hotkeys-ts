@@ -192,10 +192,10 @@ describe('useHotkeys', () => {
 
     simulateKeyPress('g');
     simulateKeyPress('h');
-    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).not.toHaveBeenCalled();
 
     simulateKeyPress('i');
-    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 
   it('tracks a shared sequence prefix independently across hooks', () => {
@@ -206,11 +206,98 @@ describe('useHotkeys', () => {
 
     simulateKeyPress('g');
     simulateKeyPress('h');
-    expect(shortCallback).toHaveBeenCalledTimes(1);
+    expect(shortCallback).not.toHaveBeenCalled();
     expect(longCallback).not.toHaveBeenCalled();
 
     simulateKeyPress('i');
+    expect(shortCallback).not.toHaveBeenCalled();
     expect(longCallback).toHaveBeenCalledTimes(1);
+  });
+
+  it('runs a pending short sequence when its ambiguity timeout expires', () => {
+    vi.useFakeTimers();
+    const callback = vi.fn();
+    renderHook(() => useHotkeys(['g h', 'g h i'], callback, 500));
+
+    simulateKeyPress('g');
+    simulateKeyPress('h');
+    expect(callback).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(500);
+    expect(callback).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it('does not run a longer sequence after the shorter match has timed out', () => {
+    vi.useFakeTimers();
+    const callback = vi.fn();
+    renderHook(() => useHotkeys(['g h', 'g h i'], callback, 500));
+
+    simulateKeyPress('g');
+    simulateKeyPress('h');
+    vi.advanceTimersByTime(500);
+    simulateKeyPress('i');
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it('runs a pending short sequence on mismatch, then starts a new sequence', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys(['g h', 'g h i', 'x y'], callback));
+
+    simulateKeyPress('g');
+    simulateKeyPress('h');
+    expect(callback).not.toHaveBeenCalled();
+
+    simulateKeyPress('x');
+    expect(callback).toHaveBeenCalledTimes(1);
+    simulateKeyPress('y');
+    expect(callback).toHaveBeenCalledTimes(2);
+  });
+
+  it('preserves another sequence that starts inside an ambiguous prefix', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys(['g h', 'g h i', 'h x'], callback));
+
+    simulateKeyPress('g');
+    simulateKeyPress('h');
+    expect(callback).not.toHaveBeenCalled();
+
+    simulateKeyPress('x');
+
+    // The pending g h callback runs, and h x is processed as another sequence.
+    expect(callback).toHaveBeenCalledTimes(2);
+  });
+
+  it('prevents the browser default synchronously when enabled for ambiguity', () => {
+    const callback = vi.fn();
+    renderHook(() =>
+      useHotkeys(['g h', 'g h i'], callback, {
+        delay: 500,
+        preventDefaultOnAmbiguous: true,
+      })
+    );
+
+    simulateKeyPress('g');
+    const event = simulateKeyPress('h');
+
+    expect(callback).not.toHaveBeenCalled();
+    expect(event.preventDefault).toHaveBeenCalledTimes(1);
+
+    simulateKeyPress('i');
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not prevent the browser default for ambiguity unless enabled', () => {
+    const callback = vi.fn();
+    renderHook(() => useHotkeys(['g h', 'g h i'], callback));
+
+    simulateKeyPress('g');
+    const event = simulateKeyPress('h');
+
+    expect(callback).not.toHaveBeenCalled();
+    expect(event.preventDefault).not.toHaveBeenCalled();
   });
 
   it('allows repeated whitespace between sequence keys', () => {
