@@ -5,6 +5,7 @@
 [![License](https://img.shields.io/npm/l/use-hotkeys-ts)](./LICENSE)
 [![Bundle size](https://img.shields.io/bundlejs/size/use-hotkeys-ts?externals=react&label=bundle%20size)](https://bundlejs.com/?q=use-hotkeys-ts)
 [![codecov](https://codecov.io/gh/tsepakme/use-hotkeys-ts/branch/main/graph/badge.svg)](https://codecov.io/gh/tsepakme/use-hotkeys-ts)
+[![XERJ Corpus Hub contributor](https://hub.xerj.org/contributors/tsepakme/badge.svg)](https://hub.xerj.org/contributors/tsepakme)
 
 A typed React hook for handling keyboard shortcuts and key sequences.
 
