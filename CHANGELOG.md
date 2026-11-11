@@ -1,10 +1,25 @@
 # Changelog
 
-## 1.2.4
+## 1.3.1
+
+### Maintenance
+- Update development dependencies and move Vitest and its coverage provider to
+  4.1.12, removing the critical and moderate advisories reported for Vitest 3.
+
+## 1.3.0
+
+### Features
+- Defer a shortcut callback when that shortcut is also the prefix of a longer
+  registered sequence. Run only the longer callback when it completes; run the
+  shorter callback when the timeout expires or the next key cannot continue it.
+- Add `UseHotkeysOptions` with `delay` and `preventDefaultOnAmbiguous`. The latter
+  synchronously prevents the browser default while an ambiguous shortcut waits.
 
 ### Fixes
-- Match sequences with shared prefixes independently and restart a sequence
-  when a key begins a new matching attempt.
+- Track overlapping sequence prefixes independently, including across separate
+  hook instances.
+- After an interrupted sequence, process the new key as a possible start of
+  another sequence.
 
 ## 1.2.3
 
