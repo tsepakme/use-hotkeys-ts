@@ -716,4 +716,71 @@ describe('useHotkeys', () => {
 
     expect(callback).toHaveBeenCalledTimes(1);
   });
+
+  it("preserves sequence history after component rerender", () => {
+    const callback = vi.fn();
+
+    const { rerender } = renderHook(
+      ({ count }: { count: number }) => {
+        useHotkeys(["g h"], callback);
+        return count;
+      },
+      {
+        initialProps: { count: 0 },
+      },
+    );
+
+    simulateKeyPress("g");
+
+    rerender({ count: 1 });
+
+    simulateKeyPress("h");
+
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it("preserves sequence history after multiple rerenders", () => {
+    const callback = vi.fn();
+
+    const { rerender } = renderHook(
+      ({ count }: { count: number }) => {
+        useHotkeys(["g h i"], callback);
+        return count;
+      },
+      { initialProps: { count: 0 } },
+    );
+
+    simulateKeyPress("g");
+    rerender({ count: 1 });
+
+    simulateKeyPress("h");
+    rerender({ count: 2 });
+
+    simulateKeyPress("i");
+
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it("updates registered shortcuts when shortcut values change", () => {
+    const callback = vi.fn();
+
+    const { rerender } = renderHook(
+      ({ shortcut }: { shortcut: string }) => {
+        useHotkeys([shortcut], callback);
+      },
+      { initialProps: { shortcut: "g h" } },
+    );
+
+    rerender({ shortcut: "x y" });
+
+    simulateKeyPress("g");
+    simulateKeyPress("h");
+
+    expect(callback).not.toHaveBeenCalled();
+
+    simulateKeyPress("x");
+    simulateKeyPress("y");
+
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
 });
