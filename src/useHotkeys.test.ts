@@ -289,6 +289,100 @@ describe('useHotkeys', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
+  it('resolves an ambiguous shortcut when the shorter continuation timeout expires', () => {
+    vi.useFakeTimers();
+    const shortCallback = vi.fn();
+    const longCallback = vi.fn();
+
+    renderHook(() => {
+      useHotkeys('g h', shortCallback, 1000);
+      useHotkeys('g h i', longCallback, 300);
+    });
+
+    simulateKeyPress('g');
+    simulateKeyPress('h');
+
+    vi.advanceTimersByTime(299);
+    expect(shortCallback).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+    expect(shortCallback).toHaveBeenCalledTimes(1);
+    expect(longCallback).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('restarts the ambiguity timeout when a longer sequence advances', () => {
+    vi.useFakeTimers();
+    const shortCallback = vi.fn();
+    const longCallback = vi.fn();
+
+    renderHook(() => {
+      useHotkeys('g h', shortCallback, 1000);
+      useHotkeys('g h i j', longCallback, 300);
+    });
+
+    simulateKeyPress('g');
+    simulateKeyPress('h');
+    vi.advanceTimersByTime(200);
+    simulateKeyPress('i');
+
+    vi.advanceTimersByTime(299);
+    expect(shortCallback).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+    expect(shortCallback).toHaveBeenCalledTimes(1);
+    expect(longCallback).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('waits until every longer continuation has expired', () => {
+    vi.useFakeTimers();
+    const shortCallback = vi.fn();
+    const quickLongCallback = vi.fn();
+    const slowLongCallback = vi.fn();
+
+    renderHook(() => {
+      useHotkeys('g h', shortCallback, 1000);
+      useHotkeys('g h i', quickLongCallback, 300);
+      useHotkeys('g h j', slowLongCallback, 700);
+    });
+
+    simulateKeyPress('g');
+    simulateKeyPress('h');
+
+    vi.advanceTimersByTime(300);
+    expect(shortCallback).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(400);
+    expect(shortCallback).toHaveBeenCalledTimes(1);
+    expect(quickLongCallback).not.toHaveBeenCalled();
+    expect(slowLongCallback).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('reschedules ambiguity timeout when a continuation is unregistered', () => {
+    vi.useFakeTimers();
+    const shortCallback = vi.fn();
+    const quickLongCallback = vi.fn();
+    const slowLongCallback = vi.fn();
+
+    renderHook(() => useHotkeys('g h', shortCallback, 1000));
+    renderHook(() => useHotkeys('g h i', quickLongCallback, 300));
+    const slowLongHook = renderHook(() =>
+      useHotkeys('g h j', slowLongCallback, 700)
+    );
+
+    simulateKeyPress('g');
+    simulateKeyPress('h');
+    slowLongHook.unmount();
+
+    vi.advanceTimersByTime(300);
+    expect(shortCallback).toHaveBeenCalledTimes(1);
+    expect(quickLongCallback).not.toHaveBeenCalled();
+    expect(slowLongCallback).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
   it('does not prevent the browser default for ambiguity unless enabled', () => {
     const callback = vi.fn();
     renderHook(() => useHotkeys(['g h', 'g h i'], callback));

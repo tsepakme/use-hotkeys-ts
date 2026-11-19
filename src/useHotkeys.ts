@@ -79,7 +79,7 @@ interface PendingMatch {
   event: KeyboardEvent;
   delay: number;
   continuations: PendingContinuation[];
-  timer: ReturnType<typeof setTimeout>;
+  timer: ReturnType<typeof setTimeout> | null;
 }
 
 const registrations = new Map<symbol, HotkeyRegistration>();
@@ -198,13 +198,38 @@ function getContinuations(
 }
 
 function clearPendingMatch(pending: PendingMatch): void {
-  clearTimeout(pending.timer);
+  if (pending.timer !== null) {
+    clearTimeout(pending.timer);
+    pending.timer = null;
+  }
   pendingMatches.delete(pending.id);
 }
 
 function invokePendingMatch(pending: PendingMatch): void {
   clearPendingMatch(pending);
   pending.callback(pending.event);
+}
+
+function schedulePendingMatchTimer(pending: PendingMatch): void {
+  if (pending.timer !== null) clearTimeout(pending.timer);
+
+  const latestContinuationDeadline = Math.max(
+    ...pending.continuations.map((continuation) => {
+      const registration = registrations.get(continuation.registrationId);
+      if (!registration) return 0;
+      return (
+        continuation.lastStepTime +
+        Math.min(pending.delay, registration.delay)
+      );
+    })
+  );
+
+  pending.timer = setTimeout(() => {
+    pending.timer = null;
+    if (!pendingMatches.has(pending.id)) return;
+    clearContinuationProgress(pending);
+    invokePendingMatch(pending);
+  }, Math.max(0, latestContinuationDeadline - Date.now()));
 }
 
 function startPendingMatch(
@@ -224,13 +249,10 @@ function startPendingMatch(
     event,
     delay: registration.delay,
     continuations,
-    timer: setTimeout(() => {
-      if (!pendingMatches.has(id)) return;
-      clearContinuationProgress(pending);
-      invokePendingMatch(pending);
-    }, registration.delay),
+    timer: null,
   };
   pendingMatches.set(id, pending);
+  schedulePendingMatchTimer(pending);
 }
 
 function resetAllSequenceHistory(): void {
@@ -320,13 +342,8 @@ function processPendingMatches(
       continue;
     }
 
-    clearTimeout(pending.timer);
     pending.continuations = survivingContinuations;
-    pending.timer = setTimeout(() => {
-      if (!pendingMatches.has(pending.id)) return;
-      clearContinuationProgress(pending);
-      invokePendingMatch(pending);
-    }, pending.delay);
+    schedulePendingMatchTimer(pending);
   }
 }
 
@@ -443,7 +460,11 @@ function registerHotkeys(
       pending.continuations = pending.continuations.filter(
         (continuation) => continuation.registrationId !== id
       );
-      if (pending.continuations.length === 0) invokePendingMatch(pending);
+      if (pending.continuations.length === 0) {
+        invokePendingMatch(pending);
+      } else {
+        schedulePendingMatchTimer(pending);
+      }
     }
 
     if (registrations.size === 0) {

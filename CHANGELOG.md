@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.3.3
+
+### Fixes
+- Resolve an ambiguous shortcut when all longer continuations have timed out,
+  using each continuation's effective delay. Restart the wait when a longer
+  sequence advances and recalculate it if a continuation is unregistered.
+
+## 1.3.2
+
+### Fixes
+- Preserve sequence progress across component rerenders when shortcuts are
+  passed as an inline array, while still updating registrations when shortcut
+  values change.
+
 ## 1.3.1
 
 ### Maintenance
