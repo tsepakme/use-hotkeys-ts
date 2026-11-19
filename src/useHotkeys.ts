@@ -473,8 +473,10 @@ export function useHotkeys(
       ? additionalOptions.preventDefaultOnAmbiguous ?? false
       : delayOrOptions.preventDefaultOnAmbiguous ?? false;
 
+  const shortcutsKey = JSON.stringify(Array.isArray(keys) ? keys : [keys]);
+
   useEffect(() => {
-    const keysArray = Array.isArray(keys) ? keys : [keys];
+    const keysArray = JSON.parse(shortcutsKey) as string[];
     const validKeysArray: string[][] = [];
     for (const shortcut of keysArray) {
       const trimmedShortcut = shortcut.trim();
@@ -483,9 +485,7 @@ export function useHotkeys(
       const combo = trimmedShortcut.split(/\s+/).map(normalizeKey);
       if (combo.some((key) => key === null)) {
         if (process.env.NODE_ENV !== "production") {
-          console.warn(
-            `useHotkeys: Ignoring invalid shortcut "${shortcut}".`
-          );
+          console.warn(`useHotkeys: Ignoring invalid shortcut "${shortcut}".`);
         }
         continue;
       }
@@ -500,5 +500,5 @@ export function useHotkeys(
       delay,
       preventDefaultOnAmbiguous,
     });
-  }, [keys, delay, preventDefaultOnAmbiguous]);
+  }, [shortcutsKey, delay, preventDefaultOnAmbiguous]);
 }
